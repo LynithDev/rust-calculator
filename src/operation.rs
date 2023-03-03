@@ -4,6 +4,7 @@ pub enum Operation {
     Subtract,
     Multiply,
     Divide,
+    Modulo,
 }
 
 impl Operation {
@@ -12,7 +13,8 @@ impl Operation {
             Operation::Add => String::from("+"),
             Operation::Subtract => String::from("-"),
             Operation::Multiply => String::from("*"),
-            Operation::Divide => String::from("/")
+            Operation::Divide => String::from("/"),
+            Operation::Modulo => String::from("%")
         }
     }
 
@@ -22,17 +24,9 @@ impl Operation {
             "-" => Some(Operation::Subtract),
             "*" => Some(Operation::Multiply),
             "/" => Some(Operation::Divide),
+            "%" => Some(Operation::Modulo),
             _ => None
         }
-    }
-
-    pub fn get_operations() -> Vec<Operation> {
-        vec![
-            Operation::Add,
-            Operation::Subtract,
-            Operation::Multiply,
-            Operation::Divide
-        ]
     }
 
     pub fn execute(&self, a: i64, b: i64, ) -> i64 {
@@ -41,6 +35,7 @@ impl Operation {
             Operation::Subtract => a - b,
             Operation::Multiply => a * b,
             Operation::Divide => a / b,
+            Operation::Modulo => a % b
         }
     }
 }
