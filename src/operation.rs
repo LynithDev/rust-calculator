@@ -29,13 +29,25 @@ impl Operation {
         }
     }
 
-    pub fn execute(&self, a: i64, b: i64, ) -> i64 {
+    pub fn execute(&self, numbers: Vec<i64>) -> i64 {
         match self {
-            Operation::Add => a + b,
-            Operation::Subtract => a - b,
-            Operation::Multiply => a * b,
-            Operation::Divide => a / b,
-            Operation::Modulo => a % b
+            Operation::Add => self.calculate(numbers, |a, b| a + b),
+            Operation::Subtract => self.calculate(numbers, |a, b| a - b),
+            Operation::Multiply => self.calculate(numbers, |a, b| a * b),
+            Operation::Divide => self.calculate(numbers, |a, b| a / b),
+            Operation::Modulo => self.calculate(numbers, |a, b| a % b)
         }
+    }
+
+    fn calculate<F>(&self, numbers: Vec<i64>, f: F) -> i64 where F: Fn(i64, i64) -> i64 {
+        let mut res: Option<i64> = None;
+        for n in numbers {
+            if res.is_none() {
+                res = Some(n);
+                continue;
+            }
+            res = Some(f(res.unwrap(), n));
+        };
+        res.unwrap()
     }
 }
