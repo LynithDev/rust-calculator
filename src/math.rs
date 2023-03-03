@@ -1,18 +1,36 @@
 use crate::{operation::Operation, token::Token};
 
-pub fn parse(s: &str) -> Vec<Token> {
+pub fn parse(expression: &str) -> Result<Vec<Token>, String> {
     let mut query = Vec::<Token>::new();
     let mut builder = String::new();
 
-    for i in s.split("") {
-        if i.eq(" ") {
+    for (i, s) in expression.split("").enumerate() {
+        if s.eq(" ") || s.is_empty() || s.eq("\n") {
             continue
         };
-        match Operation::from(i) {
-            None => builder += i,
+        
+        match Operation::from(s) {
+            None => builder += s,
             Some(operator) => {
-                query.push(Token::from(builder.as_str()));
-                query.push(Token::from(&operator.to_string()));
+                match builder.as_str() {
+                    "" if operator.to_string().eq("-") || operator.to_string().eq("+") => query.push(match Token::from("0") {
+                        Ok(r) => r,
+                        Err(err) => return Err(format!("{err} at '{i}' char '{s}'")) 
+                    }),
+
+                    "" => return Err(format!("Invalid token at '{i}' char '{s}'")),
+
+                    _ => query.push(match Token::from(builder.as_str()) {
+                        Ok(e) => e,
+                        Err(err) => return Err(err)
+                    }),
+                }
+
+                query.push(match Token::from(&operator.to_string()) {
+                    Ok(d) => d,
+                    Err(err) => return Err(format!("{err} at '{i}' char '{s}'"))
+                });
+
                 builder = String::new();
             }
         };
@@ -20,10 +38,13 @@ pub fn parse(s: &str) -> Vec<Token> {
 
     if !builder.is_empty() {
         builder = builder.trim().to_owned();
-        query.push(Token::from(builder.as_str()));
+        query.push(match Token::from(builder.as_str()) {
+            Ok(e) => e,
+            Err(err) => return Err(err)
+        });
     }
 
-    return query;
+    return Ok(query);
 }
 
 pub fn calculate(query: Vec<Token>) -> Option<i64> {
