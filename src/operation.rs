@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Operation {
     Add,
     Subtract,
@@ -36,6 +36,16 @@ impl Operation {
             Operation::Multiply => self.calculate(numbers, |a, b| a * b),
             Operation::Divide => self.calculate(numbers, |a, b| a / b),
             Operation::Modulo => self.calculate(numbers, |a, b| a % b)
+        }
+    }
+
+    pub fn get_priority(&self) -> i8 {
+        match self {
+            Operation::Modulo => 2,
+            Operation::Divide => 2,
+            Operation::Multiply => 2,
+            Operation::Add => 1,
+            Operation::Subtract => 1
         }
     }
 

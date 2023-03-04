@@ -1,6 +1,6 @@
 use crate::operation::{Operation};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub is_operation: bool,
     pub operation: Option<Operation>,
@@ -20,6 +20,18 @@ impl Token {
             is_special: false,
             special: None
         };
+    }
+
+    pub fn to_string(&self) -> String {
+        let value = if self.is_number { 
+            self.number.unwrap().to_string()
+        } else if self.is_operation { 
+            self.operation.as_ref().unwrap().to_string() 
+        } else {
+            self.special.as_ref().unwrap().to_owned()
+        };
+
+        return format!("{}", value)
     }
 
     pub fn from(s: &str) -> Result<Token, String> {
@@ -48,7 +60,7 @@ impl Token {
         let parsed = match str::parse::<i64>(s) {
             Ok(num) => num,
             Err(_) => {
-                return Err(String::from("Invalid character"))
+                return Err(format!("Invalid character '{}'", s))
             }
         };
 

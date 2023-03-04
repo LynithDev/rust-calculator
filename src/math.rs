@@ -10,6 +10,10 @@ pub fn parse(expression: &str) -> Result<Vec<Token>, String> {
         if s.eq(" ") || s.is_empty() || s.eq("\n") {
             continue
         };
+
+        if s.eq("(") || s.eq(")") {
+            continue
+        }
         
         match Operation::from(s) {
             // Append to the string builder if the current character isn't an operation
@@ -57,28 +61,81 @@ pub fn parse(expression: &str) -> Result<Vec<Token>, String> {
     return Ok(query);
 }
 
-pub fn calculate(query: Vec<Token>) -> Option<i64> {
-    let mut answer: Option<i64> = None;
+fn convert_to_postfix(query: Vec<Token>) -> Vec<Token> {
+    let mut numbers = Vec::<Token>::new();
+    let mut stack = Vec::<Token>::new();
     for (iter, token) in query.iter().enumerate() {
         if token.is_number {
-            // If the answer varialbe is null then set it to the current iterations number
-            if answer.is_none() {
-                answer = token.number;
-                continue;
-            }
-
-            // If the iteration isn't 0, then check the previous iteration token to check whether its an operation
-            if iter != 0 && query.len() > 0 && query[iter - 1].is_operation {
-                let op = &query[iter - 1].operation;
-
-                // If it is an operation, do the operation against the answer variable and the current iteration token value
-                if op.is_some() {
-                    println!("Evaluating: {} {} {}", answer.unwrap(), op.as_ref().unwrap().to_string(), token.number.unwrap());
-                    answer = Some(op.as_ref().unwrap().execute(vec![answer.unwrap(), token.number.unwrap()]));
+            numbers.push(token.to_owned());
+        } else if token.is_special {
+            match token.special.as_ref().unwrap().as_str() {
+                "(" => stack.push(token.to_owned()),
+                ")" => {
+                    while !stack.is_empty() && !stack[stack.len() - 1].to_string().eq("(") {
+                        print!("{}", stack[stack.len() - 1].to_owned().to_string());
+                        numbers.push(stack[stack.len() - 1].to_owned());
+                        stack.pop();
+                    }
+                    stack.pop();
                 }
+                _ => stack.push(token.to_owned()),
             }
+        } else if token.is_operation {
+            while stack.len() != 0 && stack[stack.len() - 1].operation.as_ref().is_some() && token.operation.as_ref().unwrap().get_priority() <= stack[stack.len() - 1].operation.as_ref().unwrap().get_priority() {
+                numbers.push(stack[stack.len() - 1].to_owned());
+                stack.pop();
+            }
+            stack.push(token.to_owned());
         }
     };
+
+    while !stack.is_empty() {
+        numbers.push(stack[stack.len() - 1].to_owned());
+        stack.pop();
+    }
+
+    numbers
+}
+
+fn calculate_postfix(query: Vec<Token>) -> i64 {
+    let mut stack = Vec::<i64>::new();
+    for (iter, token) in query.iter().enumerate() {
+        if token.is_number {
+            stack.push(token.number.unwrap())
+        } else if token.is_operation {
+            let val1 = stack.pop().unwrap();
+            let val2 = stack.pop().unwrap();
+            let op = token.operation.as_ref().unwrap();
+            
+            stack.push(op.execute(vec![val1, val2]));
+        }
+    };
+    stack.pop().unwrap()
+}
+
+pub fn calculate(query: Vec<Token>) -> Option<i64> {
+    let mut answer: Option<i64> = None;
+    answer = Some(calculate_postfix(convert_to_postfix(query)));
+    // for (iter, token) in query.iter().enumerate() {
+    //     if token.is_number {
+    //         // If the answer varialbe is null then set it to the current iterations number
+    //         if answer.is_none() {
+    //             answer = token.number;
+    //             continue;
+    //         }
+
+    //         // If the iteration isn't 0, then check the previous iteration token to check whether its an operation
+    //         if iter != 0 && query.len() > 0 && query[iter - 1].is_operation {
+    //             let op = &query[iter - 1].operation;
+
+    //             // If it is an operation, do the operation against the answer variable and the current iteration token value
+    //             if op.is_some() {
+    //                 println!("Evaluating: {} {} {}", answer.unwrap(), op.as_ref().unwrap().to_string(), token.number.unwrap());
+    //                 answer = Some(op.as_ref().unwrap().execute(vec![answer.unwrap(), token.number.unwrap()]));
+    //             }
+    //         }
+    //     }
+    // };
 
     return answer;
 }
